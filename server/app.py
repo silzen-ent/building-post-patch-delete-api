@@ -30,14 +30,16 @@ def games():
             "platform": game.platform,
             "price": game.price,
         }
+        # game_dict = game.to_dict() # This is an alternative way to get the same result as above
         games.append(game_dict)
 
     response = make_response(
         games,
         200
     )
-
     return response
+
+
 
 @app.route('/games/<int:id>')
 def game_by_id(id):
@@ -51,6 +53,8 @@ def game_by_id(id):
     )
 
     return response
+
+
 
 # This route will allow us to see all reviews or create a new review
 @app.route('/reviews', methods=['GET', 'POST'])
@@ -68,6 +72,8 @@ def reviews():
         )
         return response
     
+
+
     # This conditional block will handle the POST request to create a new review
     elif request.method == 'POST':
         new_review = Review(
@@ -89,6 +95,7 @@ def reviews():
         return response 
 
 
+
 @app.route('/users')
 def users():
 
@@ -105,54 +112,60 @@ def users():
     return response
 
 
+
 # This route will allow us to see a review by its ID, update it, or delete a review by its ID
 @app.route('/reviews/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
 def review_by_id(id):
     review = Review.query.filter_by(id=id).first()
 
-    # GET Request
-    if request.method == 'GET':
-        review_dict = review.to_dict()
-        response = make_response(
-            review_dict,
-            200
-        )
-        return response
-    
-    # PATCH Request
-    elif request.method == 'PATCH':
-        for attr in request.form:
-            setattr(review, attr, request.form.get(attr))
-
-        db.session.add(review)
-        db.session.commit()
-
-        review_dict = review.to_dict()
-        response = make_response(
-            review_dict,
-            200
-        )
-        return response
-
-    # DELETE Request
-    elif request.method == 'DELETE':
-        db.session.delete(review)
-        db.session.commit()
+    # If the review does not exist, return a 404
+    if review == None:
         response_body = {
-            "delete_successful": True,
-            "message": "Review deleted."
+            "message": "This record does not exist in our database. Please try again."
         }
-        response = make_response(
-            response_body,
-            200
-        )
+        response = make_response(response_body, 404)
+
         return response
 
+    # GET Request
+    else:
+        if request.method == 'GET':
+            review_dict = review.to_dict()
+            response = make_response(
+                review_dict,
+                200
+            )
+            return response
+        
+        # PATCH Request
+        elif request.method == 'PATCH':
+            for attr in request.form:
+                setattr(review, attr, request.form.get(attr))
+
+            db.session.add(review)
+            db.session.commit()
+
+            review_dict = review.to_dict()
+            response = make_response(
+                review_dict,
+                200
+            )
+            return response
+
+        # DELETE Request
+        elif request.method == 'DELETE':
+            db.session.delete(review)
+            db.session.commit()
+            response_body = {
+                "delete_successful": True,
+                "message": "Review deleted."
+            }
+            response = make_response(
+                response_body,
+                200
+            )
+            return response
 
 
-
-
-
-
-if __name__ == '__main__':
-    app.run(port=5555, debug=True)
+    if __name__ == '__main__':
+        app.run(port=5555, debug=True)
